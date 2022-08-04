@@ -5,17 +5,17 @@ import struct
 from random import uniform
 ACK_DROP = 0.5
 PACK_DROP = 0.5
-HALF_DROP = 0.5
+HALF_DROP = 0.0
 tcp_header_string = '!HHIIHHHHI'
 TCP_header_struct = struct.Struct(tcp_header_string)
-def pack_flags(URG, ACK,PSH,RST,SYN,FIN):
+def pack_flags(URG,ACK,PSH,RST,SYN,FIN):
 	answer = 0x0000
 	answer |= FIN & 0x1
-	answer |= SYN & 0x1 << 1
-	answer |= RST & 0x1 << 2
-	answer |= PSH & 0x1 << 3
-	answer |= ACK & 0x1 << 4
-	answer |= URG & 0x1 << 5
+	answer |= (SYN & 0x1) << 1
+	answer |= (RST & 0x1) << 2
+	answer |= (PSH & 0x1) << 3
+	answer |= (ACK & 0x1) << 4
+	answer |= (URG & 0x1) << 5
 	return answer
 def unpack_flags(options):
 	answer_dict = {}
@@ -56,7 +56,6 @@ def main():
 	args = parser.parse_args(argv[1:])
 	RCV_WND = args.window
 	if args.stop_and_wait:
-		#What i am noticing is that for STOP and WAIT the window is set to a max size of 488, which means 24 TCP header + 488 data = Recv (512)
 		RCV_WND = args.stop_and_wait
 	#next we create a client socket
 	client_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -64,13 +63,14 @@ def main():
 	client_sock.bind(('', args.recv_port))
 	client_sock.connect(server_addr)
 	recv_buffer = ['EMPTY' for x in range(RCV_WND)]
+	#['EMPTY', 'EMPTY', 'a', 'c', 'EMPTY', 'EMPTY']
 	#now we need to open both files
 	#------- EXTRA CREDIT PART 1 HERE
 	RCV_NXT = 0
 	ISN_RECV = 0
-	#------- EXTRA CREDIT PART 1 END HERE
 	with open(args.out_file, 'wb') as write_file:
 		RCV_NXT = 0
+	#------- EXTRA CREDIT PART 1 END HERE
 		while True:
 			#recieve one packet
 			packet = client_sock.recv(512)
@@ -85,7 +85,7 @@ def main():
 				continue
 			elif uniform(0,1) < HALF_DROP and len(packet) > 100:
 				packet = packet[:round(len(packet) / 2)]
-			SEG_LEN = len(packet[TCP_header_struct.size:])
+			SEG_LEN = len(packet)
 			SEG_SEQ = header['sequence_number']
 			if SEG_SEQ >= RCV_NXT and SEG_SEQ <= RCV_NXT + RCV_WND:
 				dest = SEG_SEQ - RCV_NXT
@@ -93,12 +93,16 @@ def main():
 				while dest < RCV_WND and message_bytes:
 					recv_buffer[dest] = message_bytes.pop(0)
 					dest += 1
-			elif SEG_SEQ + SEG_LEN - 1 >= RCV_NXT and SEG_SEQ + SEG_LEN - 1 <= RCV_NXT + RCV_WND:
+			if SEG_SEQ + SEG_LEN - 1 >= RCV_NXT and SEG_SEQ + SEG_LEN - 1 <= RCV_NXT + RCV_WND:
 				dest = SEG_SEQ - RCV_NXT
-				message_bytes = list(packet[dest:])
+				# print(recv_buffer[:10], dest, SEG_SEQ, RCV_NXT, packet)
+				message_bytes = list(packet)
+				# print(message_bytes[0], tmp[SEG_SEQ])
 				while message_bytes and dest < RCV_WND:
 					if dest >= 0:
 						recv_buffer[dest] = message_bytes.pop(0)
+					else:
+						message_bytes.pop(0)
 					dest += 1
 			while recv_buffer[0] != 'EMPTY':
 				write_file.write(recv_buffer.pop(0).to_bytes(1, 'big'))
@@ -110,6 +114,10 @@ def main():
 			client_sock.sendto(make_TCP_PACK(ISN_RECV, RCV_NXT, ACK=1), server_addr)
 
 	#close the socket (note this will be visible to the other side)
+		while recv_buffer[0] != 'EMPTY':
+			write_file.write(recv_buffer.pop(0).to_bytes(1, 'big'))
+			recv_buffer.append('EMPTY')
+			RCV_NXT += 1
 	client_sock.close()
 if __name__ == '__main__':
 	main()
