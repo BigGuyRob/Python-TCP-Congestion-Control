@@ -7,3 +7,4 @@ https://www.youtube.com/watch?v=2Oq4FQSr21I
    attached code? If so, explain. (note that you will get half credit for any reasonably sized bug that is fully explained in the readme)
 3. What problems did you face developing code for this project? Around how long did you spend on this project (This helps me decide what I need to explain more clearly for the next projects)
 4. Why is stop and wait much slower
+   -Stop and Wait with 0.5 ACK + PACK drop took 28 minutes and 9 seconds.
