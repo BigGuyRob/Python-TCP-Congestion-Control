@@ -1,7 +1,5 @@
 # cs352project2
 
-https://www.youtube.com/watch?v=2Oq4FQSr21I
-
 0. Please write down the full names and netids of both your team members.
 rlr151 - Robert Reid, ktk43 - Kiernan King
 
@@ -20,3 +18,8 @@ Stop and wait is so much slower comparatively due to the main principle of the s
 *Stop and Wait with 0.5 ACK + PACK drop took 28 minutes and 9 seconds.
 *Comparatively, window slider with 0.5 ACK + PACK + HALF drop took 3 minutes and 5 seconds.
 
+5. Resources referenced include:
+- https://docs.python.org/3/library/select.html
+- https://www.youtube.com/watch?v=2Oq4FQSr21I
+- https://datatracker.ietf.org/doc/html/rfc5681
+- https://datatracker.ietf.org/doc/html/rfc793#ref-3
